@@ -1,9 +1,10 @@
 package main
 
 import (
-	"time"
-	"errors"
 	"database/sql"
+	"errors"
+	"time"
+
 	"github.com/lib/pq"
 )
 
@@ -104,4 +105,57 @@ func Consultar() (estudiantes []Estudiante, err error) {
 	}
 
 	return estudiantes, nil
+}
+
+// Actualizar permite actualizar un registro en la BD
+func Actualizar(e Estudiante) error {
+	q := `UPDATE estudiantes
+			SET name = $1, age = $2, active = $3, updated_at = now()
+			WHERE id = $4`
+
+	db := getConnection()
+	defer db.Close()
+
+	stmt, err := db.Prepare(q)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	r, err := stmt.Exec(e.Name, e.Age, e.Active, e.ID)
+	if err != nil {
+		return err
+	}
+
+	i, _ := r.RowsAffected()
+	if i != 1 {
+		return errors.New("Error: Se esperaba 1 fila afectada")
+	}
+
+	return nil
+}
+
+func Borrar(id int) error {
+	q := `DELETE FROM estudiantes WHERE id = $1`
+
+	db := getConnection()
+	defer db.Close()
+
+	stmt, err := db.Prepare(q)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	r, err := stmt.Exec(id)
+	if err != nil {
+		return err
+	}
+
+	i, _ := r.RowsAffected()
+	if i != 1 {
+		return errors.New("Error: Se esperaba 1 fila afectada")
+	}
+
+	return nil
 }
